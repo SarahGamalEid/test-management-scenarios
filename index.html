@@ -95,8 +95,22 @@ input, textarea {
 
     <div class="card">
         <h3>2. Scenario Assessment</h3>
-        <p id="scenario"><strong>Scenario:</strong> A critical security vulnerability is found in the authentication module 6 hours before a major production release. The business wants to proceed and patch it next week. As a Test Lead, what is your stance and communication plan?</p>
-        <textarea id="user-answer" rows="6" placeholder="Type your leadership response here..."></textarea>
+        <p id="scenario"><strong>Scenario 1: Small team control</strong><br><br>
+You lead a team of 5 testers.<br><br>
+Situation:<br>
+• Release in 5 days<br>
+• 30% test cases still not executed<br>
+• 2 testers are stuck on automation failures<br>
+• Developer says “no bugs in latest build”<br>
+• Manager asks you: “Will we meet release date?”<br><br>
+Your turn<br>
+Answer step by step:<br><br>
+1. What do you do today first<br>
+2. How do you handle stuck automation testers<br>
+3. What do you report to your manager<br>
+4. Do you say yes, no, or “depends” to release date<br><br>
+Reply in structured points.</p>
+        <textarea id="user-answer" rows="8" placeholder="Type your structured leadership response here..."></textarea>
         <button class="btn" onclick="validateAnswer()">VALIDATE WITH GEMINI</button>
     </div>
 
@@ -104,10 +118,10 @@ input, textarea {
 
     <div id="results" class="hidden">
         <div class="card">
-            <h3 style="color: var(--red);">🔍 What Is Missing?</h3>
+            <h3 style="color: var(--red);">📋 Your Feedback</h3>
             <div id="missing-content" class="feedback-box"></div>
 
-            <h3 style="color: var(--green); margin-top:30px;">✅ The Perfect "Lead" Answer</h3>
+            <h3 style="color: var(--green); margin-top:30px;">🚀 How a Senior Test Lead Should Answer</h3>
             <div id="perfect-content" class="perfect-box"></div>
             
             <button class="btn" style="background: #222; color: #fff;" onclick="window.location.reload()">TRY NEW SCENARIO</button>
@@ -127,26 +141,70 @@ async function validateAnswer() {
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('results').classList.add('hidden');
 
-    // Updated working model name
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${key}`;
 
     const prompt = `
-You are evaluating a candidate for a Senior Test Lead position.
+You are a strict Senior Test Lead mentor evaluating a candidate for a Senior-level role.
 
 Scenario: ${scenario}
 
-Candidate's Answer: "${answer}"
+Candidate Answer: "${answer}"
 
-Evaluate strictly from a Senior Test Lead perspective.
-Provide your response in exactly this format:
+Provide your response in EXACTLY this format (copy the headings, bullet style, and structure exactly — do not add or remove any section):
 
 [MISSING]
-- Bullet point 1 of important gaps or missing considerations
-- Bullet point 2
-- ...
+What you did well
+
+* Bullet point 1
+* Bullet point 2
+
+Gaps you must fix
+1) Gap title
+   Explanation of the problem.
+   Interview expectation:
+
+   What is missing:
+
+   * sub-point
+   * sub-point
+
+   Stronger version:
+
+   * example
+   * example
+
+2) Next gap title
+   Explanation...
+   Interview expectation:
+   What is missing:
+   * ...
+   Stronger version:
+   * ...
 
 [PERFECT]
-Write a strong, professional, industry-standard response that a Senior Test Lead should give.
+How a Test Lead should answer
+1) Immediate actions
+   * bullet
+   * bullet
+
+2) Automation issue handling
+   * bullet
+   * bullet
+
+3) Manager update (strong version)
+   * bullet
+   * bullet
+
+Your upgrade thinking rule
+When you answer:
+
+Do NOT think “tasks”
+Think:
+
+* coverage
+* risk
+* impact
+* confidence
 `;
 
     try {
@@ -157,7 +215,7 @@ Write a strong, professional, industry-standard response that a Senior Test Lead
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
                     temperature: 0.7,
-                    maxOutputTokens: 1500
+                    maxOutputTokens: 2000
                 }
             })
         });
@@ -174,16 +232,14 @@ Write a strong, professional, industry-standard response that a Senior Test Lead
 
         const rawText = data.candidates[0].content.parts[0].text.trim();
         
-        // Parse the response
-        let missingPart = "No missing points detected.";
-        let perfectPart = "No perfect answer generated.";
+        // Parse using the new tags
+        let missingPart = "No feedback generated.";
+        let perfectPart = "No ideal answer generated.";
 
         if (rawText.includes('[PERFECT]')) {
             const parts = rawText.split('[PERFECT]');
             missingPart = parts[0].replace('[MISSING]', '').trim();
             perfectPart = parts[1] ? parts[1].trim() : perfectPart;
-        } else if (rawText.includes('[MISSING]')) {
-            missingPart = rawText.replace('[MISSING]', '').trim();
         } else {
             // Fallback if tags are missing
             missingPart = rawText;
