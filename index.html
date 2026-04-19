@@ -76,6 +76,11 @@ input, textarea {
     font-family: 'Space Mono'; 
     margin: 20px 0; 
 }
+#scenario-title {
+    font-size: 1.1em;
+    color: var(--accent);
+    margin-bottom: 12px;
+}
 </style>
 </head>
 <body>
@@ -89,14 +94,15 @@ input, textarea {
         <h3>1. Gemini API Key</h3>
         <input type="password" id="api-key" placeholder="Enter your Gemini API Key (starts with AIza...)">
         <small style="color:#888; display:block; margin-top:8px;">
-            Use a valid Gemini API key. You can get one from <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent)">Google AI Studio</a>
+            Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent)">Google AI Studio</a>
         </small>
     </div>
 
     <div class="card">
         <h3>2. Scenario Assessment</h3>
-        <p id="scenario"><strong>Scenario:</strong> A critical security vulnerability is found in the authentication module 6 hours before a major production release. The business wants to proceed and patch it next week. As a Test Lead, what is your stance and communication plan?</p>
-        <textarea id="user-answer" rows="6" placeholder="Type your leadership response here..."></textarea>
+        <div id="scenario-title"></div>
+        <p id="scenario" style="background:#1a1f28; padding:16px; border-radius:8px; line-height:1.7;"></p>
+        <textarea id="user-answer" rows="9" placeholder="Type your structured answer here..."></textarea>
         <button class="btn" onclick="validateAnswer()">VALIDATE WITH GEMINI</button>
     </div>
 
@@ -104,49 +110,121 @@ input, textarea {
 
     <div id="results" class="hidden">
         <div class="card">
-            <h3 style="color: var(--red);">🔍 What Is Missing?</h3>
+            <h3 style="color: var(--red);">📋 Your Feedback</h3>
             <div id="missing-content" class="feedback-box"></div>
 
-            <h3 style="color: var(--green); margin-top:30px;">✅ The Perfect "Lead" Answer</h3>
+            <h3 style="color: var(--green); margin-top:30px;">🚀 How a Senior Test Lead Should Answer</h3>
             <div id="perfect-content" class="perfect-box"></div>
             
-            <button class="btn" style="background: #222; color: #fff;" onclick="window.location.reload()">TRY NEW SCENARIO</button>
+            <button class="btn" style="background: #222; color: #fff;" onclick="loadNewScenario()">TRY NEW SCENARIO</button>
         </div>
     </div>
 </div>
 
 <script>
+// Multiple Scenarios
+const scenarios = [
+    {
+        title: "Scenario 1: Small Team Release Pressure",
+        text: `You lead a team of 5 testers.\n\nSituation:\n• Release in 5 days\n• 30% test cases still not executed\n• 2 testers are stuck on automation failures\n• Developer says “no bugs in latest build”\n• Manager asks you: “Will we meet release date?”\n\nYour turn\nAnswer step by step:\n\n1. What do you do today first?\n2. How do you handle stuck automation testers?\n3. What do you report to your manager?\n4. Do you say yes, no, or “depends” to the release date?\n\nReply in structured points.`
+    },
+    {
+        title: "Scenario 2: Production Incident",
+        text: `A major bug was found in production 2 days after release. Customers are heavily impacted.\n\nYou are the Test Lead. The QA Director asks you what went wrong and how you will prevent it in future releases.\n\nAnswer the following:\n1. What is your immediate response?\n2. How do you investigate the gap?\n3. What process improvements will you propose?\n4. How do you communicate with stakeholders?`
+    },
+    {
+        title: "Scenario 3: Scope Creep & Tight Deadline",
+        text: `The project is in final testing phase. Business suddenly adds 12 new high-priority features 8 days before go-live.\n\nYour team is already at full capacity.\n\nManager asks: “Can Testing still finish on time?”\n\nExplain your approach, risk assessment, and what you will tell the manager.`
+    },
+    {
+        title: "Scenario 4: Team Conflict",
+        text: `One of your senior testers is continuously arguing with developers and blocking defect closure. The Development Manager has complained about your team’s “negative attitude”.\n\nAs Test Lead, how do you handle this situation?`
+    },
+    {
+        title: "Scenario 5: Test Environment Down",
+        text: `Test environment has been unstable for 3 days. Only 40% of planned testing is completed, and the release is scheduled in 4 days.\n\nStakeholders are pushing hard to proceed.\n\nWhat is your stance and action plan?`
+    }
+];
+
+let currentScenarioIndex = -1;
+
+// Load a new random scenario (different from current)
+function loadNewScenario() {
+    document.getElementById('results').classList.add('hidden');
+    document.getElementById('user-answer').value = '';
+
+    let newIndex;
+    do {
+        newIndex = Math.floor(Math.random() * scenarios.length);
+    } while (newIndex === currentScenarioIndex && scenarios.length > 1);
+
+    currentScenarioIndex = newIndex;
+    
+    const sc = scenarios[currentScenarioIndex];
+    
+    document.getElementById('scenario-title').innerHTML = `<strong>${sc.title}</strong>`;
+    document.getElementById('scenario').innerHTML = sc.text.replace(/\n/g, '<br>');
+}
+
 async function validateAnswer() {
     const key = document.getElementById('api-key').value.trim();
     const answer = document.getElementById('user-answer').value.trim();
-    const scenario = document.getElementById('scenario').innerText;
+    const scenarioText = document.getElementById('scenario').innerText;
     
     if (!key) return alert("❌ API Key is required.");
-    if (answer.length < 20) return alert("❌ Please provide a more detailed response (minimum 20 characters).");
+    if (answer.length < 30) return alert("❌ Please provide a detailed response (minimum 30 characters).");
 
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('results').classList.add('hidden');
 
-    // Updated working model name
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${key}`;
 
     const prompt = `
-You are evaluating a candidate for a Senior Test Lead position.
+You are a strict Senior Test Lead mentor evaluating a candidate.
 
-Scenario: ${scenario}
+Scenario: ${scenarioText}
 
-Candidate's Answer: "${answer}"
+Candidate Answer: "${answer}"
 
-Evaluate strictly from a Senior Test Lead perspective.
-Provide your response in exactly this format:
+Provide your response in EXACTLY this format:
 
 [MISSING]
-- Bullet point 1 of important gaps or missing considerations
-- Bullet point 2
-- ...
+What you did well
+
+* Point 1
+* Point 2
+
+Gaps you must fix
+1) Gap title
+   Explanation of the problem.
+   Interview expectation:
+
+   What is missing:
+
+   * sub-point
+   * sub-point
+
+   Stronger version:
+
+   * example
+   * example
+
+2) Next gap...
 
 [PERFECT]
-Write a strong, professional, industry-standard response that a Senior Test Lead should give.
+How a Test Lead should answer
+1) Immediate actions
+   * bullet
+   * bullet
+
+2) Handling...
+   * bullet
+
+3) Communication / Reporting
+   * bullet
+
+Your upgrade thinking rule
+• Think in terms of Risk, Coverage, Impact, and Confidence
 `;
 
     try {
@@ -155,53 +233,40 @@ Write a strong, professional, industry-standard response that a Senior Test Lead
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 1500
-                }
+                generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
             })
         });
 
         const data = await response.json();
 
-        if (data.error) {
-            throw new Error(data.error.message || "Unknown API error");
-        }
-
-        if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
-            throw new Error("No response received from Gemini");
-        }
+        if (data.error) throw new Error(data.error.message);
 
         const rawText = data.candidates[0].content.parts[0].text.trim();
         
-        // Parse the response
-        let missingPart = "No missing points detected.";
-        let perfectPart = "No perfect answer generated.";
+        let missingPart = rawText;
+        let perfectPart = "";
 
         if (rawText.includes('[PERFECT]')) {
             const parts = rawText.split('[PERFECT]');
             missingPart = parts[0].replace('[MISSING]', '').trim();
             perfectPart = parts[1] ? parts[1].trim() : perfectPart;
-        } else if (rawText.includes('[MISSING]')) {
-            missingPart = rawText.replace('[MISSING]', '').trim();
-        } else {
-            // Fallback if tags are missing
-            missingPart = rawText;
         }
 
         document.getElementById('missing-content').innerText = missingPart;
-        document.getElementById('perfect-content').innerText = perfectPart;
+        document.getElementById('perfect-content').innerText = perfectPart || "Ideal answer not generated.";
         
         document.getElementById('results').classList.remove('hidden');
         document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
 
     } catch (err) {
-        console.error(err);
         alert("CRITICAL ERROR: " + err.message);
     } finally {
         document.getElementById('loader').classList.add('hidden');
     }
 }
+
+// Load first scenario on page load
+window.onload = loadNewScenario;
 </script>
 
 </body>
