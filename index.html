@@ -3,112 +3,142 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Test Lead Assessment Simulator</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+<title>Test Lead Assessment Simulator — Elite Level</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
 <style>
+/* ============================================================
+   DESIGN SYSTEM 
+   ============================================================ */
 :root {
-  --bg: #0a0c0f; --surface: #111418; --border: #252b35; --text: #d8dde8;
-  --accent: #00e5ff; --green: #22c55e; --red: #ef4444;
+  --bg: #0a0c0f; --surface: #111418; --surface2: #181c22;
+  --border: #252b35; --text: #d8dde8; --accent: #00e5ff;
+  --red: #ef4444; --green: #22c55e;
 }
-body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; padding: 20px; line-height: 1.6; }
-#app { max-width: 800px; margin: 0 auto; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; padding: 20px; }
+#app { max-width: 900px; margin: 0 auto; }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
-h3 { font-family: 'Syne', sans-serif; color: #fff; margin-bottom: 10px; }
+.label-mono { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--accent); text-transform: uppercase; }
 input, textarea { 
     width: 100%; background: #000; border: 1px solid var(--border); border-radius: 6px;
-    color: var(--text); padding: 12px; font-family: 'Space Mono', monospace; margin-top: 10px;
+    color: var(--text); padding: 12px; font-family: 'Space Mono'; margin-top: 10px; outline: none;
 }
 .btn { 
-    background: var(--accent); color: #000; padding: 12px 24px; border: none; 
-    border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 20px;
+    background: var(--accent); color: #000; padding: 14px; border: none; border-radius: 6px; 
+    font-weight: 800; cursor: pointer; width: 100%; margin-top: 20px; font-family: 'Syne';
 }
 .hidden { display: none; }
-.feedback { border-left: 4px solid var(--red); background: rgba(239, 68, 68, 0.1); padding: 15px; margin: 15px 0; border-radius: 4px; }
-.perfect { border-left: 4px solid var(--green); background: rgba(34, 197, 94, 0.1); padding: 15px; margin: 15px 0; border-radius: 4px; }
-#loader { text-align: center; color: var(--accent); font-family: 'Space Mono'; margin: 20px 0; }
+.feedback-box { border-left: 4px solid var(--red); background: rgba(239,68,68,0.05); padding: 15px; margin-top: 10px; white-space: pre-wrap; }
+.perfect-box { border-left: 4px solid var(--green); background: rgba(34,197,94,0.05); padding: 15px; margin-top: 10px; white-space: pre-wrap; }
+
+/* Loading Animation */
+#loader { position: fixed; inset: 0; background: rgba(10,12,15,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+.spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
+<div id="loader" class="hidden">
+    <div class="spinner"></div>
+    <p style="margin-top:15px; font-family: 'Space Mono'; color: var(--accent);">ENGAGING GEMINI FLASH...</p>
+</div>
+
 <div id="app">
+    <header style="text-align: center; margin-bottom: 40px;">
+        <h1 style="font-family: 'Syne'; font-size: 32px;">TEST LEAD <span style="color:var(--accent)">SIMULATOR</span></h1>
+        <p class="label-mono">Validated via Gemini 1.5 Flash</p>
+    </header>
+
     <div class="card">
-        <h3>1. API Configuration</h3>
-        <input type="password" id="api-key" placeholder="Enter Gemini API Key (AIza...)">
+        <p class="label-mono">Authentication</p>
+        <input type="password" id="api-key" placeholder="Paste your Gemini API Key here...">
     </div>
 
     <div class="card">
-        <h3>2. Scenario Assessment</h3>
-        <p id="scenario">Scenario: A critical bug is found 1 day before release. The product owner wants to launch anyway. What is your action plan as a Test Lead?</p>
-        <textarea id="user-answer" rows="5" placeholder="Type your response here..."></textarea>
-        <button class="btn" onclick="validateAction()">Analyze Answer</button>
+        <p class="label-mono">Active Scenario</p>
+        <h3 id="scenario-text" style="margin-top:10px; font-family: 'Syne';">
+            A critical regression is found 4 hours before production deployment. The stakeholders are pushing to release. How do you manage the risk and communication?
+        </h3>
+        
+        <textarea id="user-answer" rows="6" placeholder="Type your leadership strategy..."></textarea>
+        
+        <button class="btn" onclick="runAISimulation()">SUBMIT FOR ELITE EVALUATION</button>
     </div>
 
-    <div id="loader" class="hidden">POLLING GEMINI AI...</div>
-
-    <div id="results" class="hidden">
+    <div id="results-container" class="hidden">
         <div class="card">
-            <h3 style="color: var(--red);">Gaps Identified</h3>
-            <div id="missing-box" class="feedback"></div>
-            <h3 style="color: var(--green);">The Perfect Response</h3>
-            <div id="perfect-box" class="perfect"></div>
+            <h3 style="color: var(--red); font-family: 'Syne';">Missing Components</h3>
+            <div id="missing-out" class="feedback-box"></div>
+
+            <h3 style="color: var(--green); margin-top:30px; font-family: 'Syne';">The Perfect "Lead" Response</h3>
+            <div id="perfect-out" class="perfect-box"></div>
         </div>
     </div>
 </div>
 
 <script>
-async function validateAction() {
+async function runAISimulation() {
     const key = document.getElementById('api-key').value.trim();
     const answer = document.getElementById('user-answer').value.trim();
-    
-    if (!key) return alert("API Key Required");
-    if (answer.length < 10) return alert("Please provide a more detailed answer.");
+    const scenario = document.getElementById('scenario-text').innerText;
 
+    if (!key) return alert("Please enter your API Key.");
+    if (answer.length < 10) return alert("Please provide a more comprehensive answer.");
+
+    // UI Loading State
     document.getElementById('loader').classList.remove('hidden');
-    document.getElementById('results').classList.add('hidden');
+    document.getElementById('results-container').classList.add('hidden');
 
-    // USING THE STABLE v1 BETA ENDPOINT WITH THE BASE MODEL NAME
-    // This is the most compatible configuration for 2026 regional availability
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+    // USING YOUR CURL DATA: v1beta + gemini-1.5-flash-latest
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`;
 
-    const payload = {
-        contents: [{
-            parts: [{
-                text: `Task: Evaluate this Test Lead answer.
-                       Question: ${document.getElementById('scenario').innerText}
-                       Answer: ${answer}
-                       
-                       Return your response exactly in this format:
-                       MISSING: [list missing points]
-                       PERFECT: [provide perfect answer]`
-            }]
-        }]
-    };
+    const prompt = `
+        You are a Senior QA Director. Evaluate this Test Lead candidate's answer.
+        
+        SCENARIO: ${scenario}
+        CANDIDATE ANSWER: "${answer}"
+        
+        TASK:
+        1. Identify exactly what is MISSING (gaps in risk management, stakeholder comms, or technical strategy).
+        2. Provide a PERFECT, high-scoring model answer.
+        
+        RESPONSE FORMAT (Strict):
+        [MISSING]
+        (Write gaps here)
+        [PERFECT]
+        (Write perfect answer here)
+    `;
 
     try {
-        const response = await fetch(url, {
+        const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
         });
 
         const data = await response.json();
 
-        if (data.error) {
-            throw new Error(`${data.error.message} (Code: ${data.error.code})`);
-        }
+        if (data.error) throw new Error(data.error.message);
 
-        const text = data.candidates[0].content.parts[0].text;
+        const aiResponse = data.candidates[0].content.parts[0].text;
+
+        // Split Logic based on [PERFECT] tag
+        const parts = aiResponse.split('[PERFECT]');
+        const missingContent = parts[0].replace('[MISSING]', '').trim();
+        const perfectContent = parts[1] ? parts[1].trim() : "No perfect answer provided.";
+
+        // Inject into UI
+        document.getElementById('missing-out').innerText = missingContent;
+        document.getElementById('perfect-out').innerText = perfectContent;
         
-        // Simple Split Logic
-        const parts = text.split('PERFECT:');
-        document.getElementById('missing-box').innerText = parts[0].replace('MISSING:', '').trim();
-        document.getElementById('perfect-box').innerText = parts[1] ? parts[1].trim() : "Perfect answer could not be generated.";
-        
-        document.getElementById('results').classList.remove('hidden');
+        document.getElementById('results-container').classList.remove('hidden');
+        document.getElementById('results-container').scrollIntoView({ behavior: 'smooth' });
 
     } catch (err) {
-        console.error(err);
-        alert("CRITICAL ERROR: " + err.message + "\n\nTip: Ensure your key is from Google AI Studio and has 'Gemini API' enabled.");
+        alert("SIMULATION ERROR: " + err.message);
     } finally {
         document.getElementById('loader').classList.add('hidden');
     }
