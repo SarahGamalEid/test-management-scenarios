@@ -3,219 +3,115 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Test Lead Assessment Simulator — Elite Level</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<title>Test Lead Assessment Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-/* ============================================================
-   DESIGN SYSTEM — Industrial / Command Center Aesthetic
-   ============================================================ */
 :root {
-  --bg:        #0a0c0f;
-  --surface:   #111418;
-  --surface2:  #181c22;
-  --border:    #252b35;
-  --border2:   #2e3642;
-  --text:      #d8dde8;
-  --text2:     #7a8699;
-  --text3:     #3f4a5c;
-  --accent:    #00e5ff;
-  --accent2:   #0099bb;
-  --gold:      #f5c518;
-  --green:     #22c55e;
-  --red:       #ef4444;
-  --orange:    #f97316;
-  --purple:    #a78bfa;
-  --font-head: 'Syne', sans-serif;
-  --font-mono: 'Space Mono', monospace;
-  --font-body: 'DM Sans', sans-serif;
-  --r:         6px;
-  --r2:        12px;
+  --bg: #0a0c0f; --surface: #111418; --border: #252b35; --text: #d8dde8;
+  --accent: #00e5ff; --green: #22c55e; --red: #ef4444;
 }
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; min-height: 100vh; padding: 20px; }
-
-/* ---- Layout ---- */
-#app { max-width: 900px; margin: 0 auto; }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r2); padding: 24px; margin-bottom: 20px; }
-.hidden { display: none !important; }
-
-/* ---- Typography ---- */
-h1, h2, h3 { font-family: var(--font-head); color: #fff; margin-bottom: 15px; }
-.label-mono { font-family: var(--font-mono); font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-
-/* ---- Inputs ---- */
-input, textarea {
-    width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: var(--r);
-    color: var(--text); font-family: var(--font-mono); padding: 12px; margin-top: 8px; outline: none;
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; padding: 20px; line-height: 1.6; }
+#app { max-width: 800px; margin: 0 auto; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+h3 { font-family: 'Syne', sans-serif; color: #fff; margin-bottom: 10px; }
+input, textarea { 
+    width: 100%; background: #000; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); padding: 12px; font-family: 'Space Mono', monospace; margin-top: 10px;
 }
-input:focus, textarea:focus { border-color: var(--accent); }
-
-/* ---- Buttons ---- */
-.btn {
-    padding: 12px 24px; border-radius: var(--r); border: none; font-family: var(--font-head); 
-    font-weight: 700; cursor: pointer; text-transform: uppercase; transition: 0.2s;
+.btn { 
+    background: var(--accent); color: #000; padding: 12px 24px; border: none; 
+    border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 20px;
 }
-.btn-primary { background: var(--accent); color: #000; }
-.btn-primary:hover { background: #33eeff; box-shadow: 0 0 15px rgba(0,229,255,0.4); }
-
-/* ---- Feedback Styles ---- */
-.feedback-box { border-left: 4px solid var(--red); background: rgba(239, 68, 68, 0.05); padding: 15px; margin-top: 15px; border-radius: 4px; }
-.perfect-box { border-left: 4px solid var(--green); background: rgba(34, 197, 94, 0.05); padding: 15px; margin-top: 15px; border-radius: 4px; }
-
-/* Loading Spinner */
-#loading-overlay {
-  position: fixed; inset: 0; background: rgba(10,12,15,0.9);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000;
-}
-.spinner { width: 40px; height: 40px; border: 4px solid rgba(0,229,255,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.hidden { display: none; }
+.feedback { border-left: 4px solid var(--red); background: rgba(239, 68, 68, 0.1); padding: 15px; margin: 15px 0; border-radius: 4px; }
+.perfect { border-left: 4px solid var(--green); background: rgba(34, 197, 94, 0.1); padding: 15px; margin: 15px 0; border-radius: 4px; }
+#loader { text-align: center; color: var(--accent); font-family: 'Space Mono'; margin: 20px 0; }
 </style>
 </head>
 <body>
 
-<div id="loading-overlay" class="hidden">
-    <div class="spinner"></div>
-    <p style="margin-top:15px; font-family: var(--font-mono); color: var(--accent);">AI PANEL ANALYZING...</p>
-</div>
-
 <div id="app">
-    <header style="margin-bottom: 30px; text-align: center;">
-        <h1 style="font-size: 32px;">Test<span>Lead</span> Validator</h1>
-        <p class="label-mono">Gemini AI Integration · Single-Page Simulator</p>
-    </header>
-
     <div class="card">
-        <p class="label-mono">Security Check</p>
-        <h3>Enter Your Gemini API Key</h3>
-        <input type="password" id="api-key" placeholder="AIzaSy...">
-        <p style="font-size: 11px; color: var(--text3); margin-top: 8px;">Your key is used only for this session and never stored.</p>
+        <h3>1. API Configuration</h3>
+        <input type="password" id="api-key" placeholder="Enter Gemini API Key (AIza...)">
     </div>
 
     <div class="card">
-        <p class="label-mono">Current Scenario</p>
-        <h3 id="question-text">Scenario: A critical bug is found 24 hours before a major release. The Stakeholder wants to "ship it anyway." How do you handle this?</h3>
-        
-        <p class="label-mono" style="margin-top:20px;">Your Response</p>
-        <textarea id="user-answer" rows="6" placeholder="Describe your strategy as a Test Lead..."></textarea>
-        
-        <button class="btn btn-primary" style="margin-top:20px; width:100%;" onclick="processValidation()">
-            Validate & Generate Perfect Answer
-        </button>
+        <h3>2. Scenario Assessment</h3>
+        <p id="scenario">Scenario: A critical bug is found 1 day before release. The product owner wants to launch anyway. What is your action plan as a Test Lead?</p>
+        <textarea id="user-answer" rows="5" placeholder="Type your response here..."></textarea>
+        <button class="btn" onclick="validateAction()">Analyze Answer</button>
     </div>
 
-    <div id="results-area" class="hidden">
+    <div id="loader" class="hidden">POLLING GEMINI AI...</div>
+
+    <div id="results" class="hidden">
         <div class="card">
-            <h3 style="color: var(--red);">What Is Missing?</h3>
-            <div id="missing-content" class="feedback-box"></div>
-
-            <h3 style="color: var(--green); margin-top:30px;">The Perfect Answer</h3>
-            <div id="perfect-content" class="perfect-box"></div>
-            
-            <button class="btn" style="background: var(--surface2); color: var(--text); margin-top:20px;" onclick="resetForm()">
-                Try Another Answer
-            </button>
+            <h3 style="color: var(--red);">Gaps Identified</h3>
+            <div id="missing-box" class="feedback"></div>
+            <h3 style="color: var(--green);">The Perfect Response</h3>
+            <div id="perfect-box" class="perfect"></div>
         </div>
     </div>
 </div>
 
 <script>
-async function processValidation() {
-  const key = document.getElementById('api-key').value.trim();
-  const answer = document.getElementById('user-answer').value.trim();
-  const question = document.getElementById('question-text').innerText;
-
-  if (!key) return alert("Please enter your Gemini API Key.");
-  if (answer.length < 5) return alert("Please write a bit more to analyze.");
-
-  // Show the loader from your UI
-  document.getElementById('loading-overlay').classList.remove('hidden');
-
-  // UPDATED ENDPOINT: Using v1 stable and the specific -latest alias
-  const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${key}`;
-
-  const requestBody = {
-    contents: [{
-      parts: [{
-        text: `You are an expert Test Lead. Evaluate this answer:
-               Question: "${question}"
-               User Answer: "${answer}"
-               
-               FORMAT YOUR RESPONSE EXACTLY LIKE THIS:
-               [MISSING]
-               Identify gaps.
-               [PERFECT]
-               Provide the ideal response.`
-      }]
-    }]
-  };
-
-  try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      // Logic for common errors in 2026
-      if (data.error?.message.includes("location")) {
-        throw new Error("This API Key's region does not support this model. Check Google AI Studio settings.");
-      }
-      throw new Error(data.error?.message || "Unknown API Error");
-    }
-
-    const aiText = data.candidates[0].content.parts[0].text;
+async function validateAction() {
+    const key = document.getElementById('api-key').value.trim();
+    const answer = document.getElementById('user-answer').value.trim();
     
-    // Parse and display
-    const missing = aiText.split('[PERFECT]')[0].replace('[MISSING]', '').trim();
-    const perfect = aiText.split('[PERFECT]')[1]?.trim() || "No perfect answer generated.";
+    if (!key) return alert("API Key Required");
+    if (answer.length < 10) return alert("Please provide a more detailed answer.");
 
-    document.getElementById('missing-content').innerText = missing;
-    document.getElementById('perfect-content').innerText = perfect;
-    document.getElementById('results-area').classList.remove('hidden');
-    document.getElementById('results-area').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('loader').classList.remove('hidden');
+    document.getElementById('results').classList.add('hidden');
 
-  } catch (err) {
-    alert("CRITICAL ERROR: " + err.message);
-  } finally {
-    document.getElementById('loading-overlay').classList.add('hidden');
-  }
-}
-// Fallback helper for regional/versioning issues
-async function tryFallback(key, prompt) {
-    const FALLBACK_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`;
+    // USING THE STABLE v1 BETA ENDPOINT WITH THE BASE MODEL NAME
+    // This is the most compatible configuration for 2026 regional availability
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+
+    const payload = {
+        contents: [{
+            parts: [{
+                text: `Task: Evaluate this Test Lead answer.
+                       Question: ${document.getElementById('scenario').innerText}
+                       Answer: ${answer}
+                       
+                       Return your response exactly in this format:
+                       MISSING: [list missing points]
+                       PERFECT: [provide perfect answer]`
+            }]
+        }]
+    };
+
     try {
-        const res = await fetch(FALLBACK_URL, {
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            body: JSON.stringify(payload)
         });
-        const data = await res.json();
-        renderResults(data.candidates[0].content.parts[0].text);
-    } catch (e) {
-        alert("Primary and Fallback APIs failed. Please check if your API key is restricted to a specific region.");
+
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(`${data.error.message} (Code: ${data.error.code})`);
+        }
+
+        const text = data.candidates[0].content.parts[0].text;
+        
+        // Simple Split Logic
+        const parts = text.split('PERFECT:');
+        document.getElementById('missing-box').innerText = parts[0].replace('MISSING:', '').trim();
+        document.getElementById('perfect-box').innerText = parts[1] ? parts[1].trim() : "Perfect answer could not be generated.";
+        
+        document.getElementById('results').classList.remove('hidden');
+
+    } catch (err) {
+        console.error(err);
+        alert("CRITICAL ERROR: " + err.message + "\n\nTip: Ensure your key is from Google AI Studio and has 'Gemini API' enabled.");
     } finally {
-        document.getElementById('loading-overlay').classList.add('hidden');
+        document.getElementById('loader').classList.add('hidden');
     }
-}
-
-function renderResults(rawText) {
-    const missingPart = rawText.split('[PERFECT]')[0].replace('[MISSING]', '').trim();
-    const perfectPart = rawText.split('[PERFECT]')[1].trim();
-
-    document.getElementById('missing-content').innerText = missingPart;
-    document.getElementById('perfect-content').innerText = perfectPart;
-    document.getElementById('results-area').classList.remove('hidden');
-    document.getElementById('results-area').scrollIntoView({ behavior: 'smooth' });
-}
-function resetForm() {
-    document.getElementById('user-answer').value = '';
-    document.getElementById('results-area').classList.add('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 </script>
 
