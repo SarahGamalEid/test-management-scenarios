@@ -127,12 +127,14 @@ async function processValidation() {
     const question = document.getElementById('question-text').innerText;
 
     if (!key) return alert("Please enter your Gemini API Key first.");
-    if (!answer || answer.length < 10) return alert("Please provide a more detailed answer for analysis.");
+    if (!answer || answer.length < 10) return alert("Please provide a more detailed answer.");
 
-    // Show Loading
     document.getElementById('loading-overlay').classList.remove('hidden');
 
-    // The Prompt Logic
+    // Update 1: We use 'gemini-1.5-flash-latest' or the stable 'v1' endpoint
+    // Both are more reliable than the generic v1beta string
+    const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+
     const prompt = `
         You are a Senior QA Director. Evaluate the following Test Lead candidate answer.
         
@@ -141,19 +143,18 @@ async function processValidation() {
         Candidate Answer: "${answer}"
         
         TASK:
-        1. Identify what is MISSING from the answer based on professional ISTQB and Lead-level standards.
+        1. Identify what is MISSING from the answer based on professional standards.
         2. Provide a PERFECT, high-scoring version of the answer.
         
         RESPONSE FORMAT:
-        Use this exact structure:
         [MISSING]
-        List the points here.
+        (Points here)
         [PERFECT]
-        Write the perfect answer here.
+        (Answer here)
     `;
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+        const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -164,21 +165,14 @@ async function processValidation() {
         const data = await response.json();
         
         if (data.error) {
+            // If v1 fails, try v1beta with the exact model version
+            if (data.error.code === 404) {
+                return tryFallback(key, prompt);
+            }
             throw new Error(data.error.message);
         }
 
-        const rawText = data.candidates[0].content.parts[0].text;
-
-        // Parsing the "Missing" and "Perfect" sections
-        const missingPart = rawText.split('[PERFECT]')[0].replace('[MISSING]', '').trim();
-        const perfectPart = rawText.split('[PERFECT]')[1].trim();
-
-        // Update UI
-        document.getElementById('missing-content').innerText = missingPart;
-        document.getElementById('perfect-content').innerText = perfectPart;
-        
-        document.getElementById('results-area').classList.remove('hidden');
-        document.getElementById('results-area').scrollIntoView({ behavior: 'smooth' });
+        renderResults(data.candidates[0].content.parts[0].text);
 
     } catch (err) {
         alert("API Error: " + err.message);
@@ -187,6 +181,33 @@ async function processValidation() {
     }
 }
 
+// Fallback helper for regional/versioning issues
+async function tryFallback(key, prompt) {
+    const FALLBACK_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`;
+    try {
+        const res = await fetch(FALLBACK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await res.json();
+        renderResults(data.candidates[0].content.parts[0].text);
+    } catch (e) {
+        alert("Primary and Fallback APIs failed. Please check if your API key is restricted to a specific region.");
+    } finally {
+        document.getElementById('loading-overlay').classList.add('hidden');
+    }
+}
+
+function renderResults(rawText) {
+    const missingPart = rawText.split('[PERFECT]')[0].replace('[MISSING]', '').trim();
+    const perfectPart = rawText.split('[PERFECT]')[1].trim();
+
+    document.getElementById('missing-content').innerText = missingPart;
+    document.getElementById('perfect-content').innerText = perfectPart;
+    document.getElementById('results-area').classList.remove('hidden');
+    document.getElementById('results-area').scrollIntoView({ behavior: 'smooth' });
+}
 function resetForm() {
     document.getElementById('user-answer').value = '';
     document.getElementById('results-area').classList.add('hidden');
